@@ -89,4 +89,4 @@ async def predict(file: UploadFile = File(...)):
                                top_k=top_k, is_hazardous_prediction=is_hazardous_prediction,
                                possible_hazard_flag=possible_hazard_flag, note=note)
 
-app.mount("/", StaticFiles(directory=str(BASE_DIR / "app" / "static"), html=True), name="static")
+app.mount("/", StaticFiles(directory=str(BASE_DIR / "static"), html=True), name="static")
