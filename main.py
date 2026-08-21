@@ -12,7 +12,7 @@ from torchvision import transforms
 
 from model import GarbageCNN
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent
 CHECKPOINT_PATH = BASE_DIR / "model" / "best_model.pt"
 NORM_MEAN = [0.485, 0.456, 0.406]
 NORM_STD = [0.229, 0.224, 0.225]
