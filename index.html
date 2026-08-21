@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GreenCycle Garbage Classifier</title>
+<style>
+  body { font-family: -apple-system, Arial, sans-serif; max-width: 480px; margin: 60px auto; padding: 0 20px; color: #222; }
+  h1 { font-size: 1.4rem; }
+  #dropzone { border: 2px dashed #999; border-radius: 10px; padding: 30px; text-align: center; cursor: pointer; }
+  #dropzone.hover { border-color: #2e7d32; background: #f1f8f1; }
+  #preview { max-width: 100%; margin-top: 16px; border-radius: 8px; display: none; }
+  .pred { font-size: 1.2rem; font-weight: bold; }
+  .warn { color: #b00020; font-weight: bold; margin-top: 8px; }
+  .bar-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; font-size: 0.9rem; }
+  .bar-bg { flex: 1; background: #eee; border-radius: 4px; height: 10px; overflow: hidden; }
+  .bar-fill { background: #2e7d32; height: 100%; }
+  #status { color: #777; font-size: 0.9rem; }
+</style>
+</head>
+<body>
+  <h1>GreenCycle Garbage Classifier</h1>
+  <p>Upload a photo of an item to classify it.</p>
+  <div id="dropzone">
+    <p>Click to choose an image, or drag one here</p>
+    <input type="file" id="fileInput" accept="image/*" style="display:none">
+  </div>
+  <img id="preview">
+  <div id="status"></div>
+  <div id="result"></div>
+  <script>
+    const dropzone = document.getElementById('dropzone');
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
+    const statusEl = document.getElementById('status');
+    const resultEl = document.getElementById('result');
+    dropzone.addEventListener('click', () => fileInput.click());
+    dropzone.addEventListener('dragover', e => { e.preventDefault(); dropzone.classList.add('hover'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('hover'));
+    dropzone.addEventListener('drop', e => {
+      e.preventDefault(); dropzone.classList.remove('hover');
+      if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+    });
+    fileInput.addEventListener('change', () => { if (fileInput.files.length) handleFile(fileInput.files[0]); });
+
+    async function handleFile(file) {
+      preview.src = URL.createObjectURL(file);
+      preview.style.display = 'block';
+      resultEl.innerHTML = '';
+      statusEl.textContent = 'Classifying...';
+      const formData = new FormData();
+      formData.append('file', file);
+      try {
+        const res = await fetch('/predict', { method: 'POST', body: formData });
+        if (!res.ok) throw new Error((await res.json()).detail || 'Prediction failed');
+        const data = await res.json();
+        statusEl.textContent = '';
+        renderResult(data);
+      } catch (err) {
+        statusEl.textContent = '';
+        resultEl.innerHTML = `<p style="color:red">${err.message}</p>`;
+      }
+    }
+    function renderResult(data) {
+      let html = `<div class="pred">${data.predicted_class} (${(data.confidence * 100).toFixed(1)}%)</div>`;
+      if (data.note) html += `<div class="warn">${data.note}</div>`;
+      data.top_k.forEach(item => {
+        const pct = (item.probability * 100).toFixed(1);
+        html += `<div class="bar-row"><span style="width:90px">${item.class}</span>
+          <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div><span>${pct}%</span></div>`;
+      });
+      resultEl.innerHTML = html;
+    }
+  </script>
+</body>
+</html>
