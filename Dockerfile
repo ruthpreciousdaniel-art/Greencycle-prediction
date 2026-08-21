@@ -7,4 +7,4 @@ COPY app/model.py
 COPY app/static ./static
 COPY model ./model
 EXPOSE 8000
-CMD ["uvicorn", "main:app", "--app-dir", "app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c""uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}"]
