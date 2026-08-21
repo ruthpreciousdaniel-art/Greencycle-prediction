@@ -1,3 +1,4 @@
+
 import io
 from pathlib import Path
 from typing import List
@@ -5,7 +6,7 @@ from typing import List
 import torch
 import torch.nn.functional as F
 from fastapi import FastAPI, File, HTTPException, UploadFile
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel
 from PIL import Image
 from torchvision import transforms
@@ -13,7 +14,7 @@ from torchvision import transforms
 from model import GarbageCNN
 
 BASE_DIR = Path(__file__).resolve().parent
-CHECKPOINT_PATH = BASE_DIR / "model" / "best_model.pt"
+CHECKPOINT_PATH = BASE_DIR / "best_model.pt"
 NORM_MEAN = [0.485, 0.456, 0.406]
 NORM_STD = [0.229, 0.224, 0.225]
 HAZARD_SECONDARY_THRESHOLD = 0.15
@@ -89,4 +90,6 @@ async def predict(file: UploadFile = File(...)):
                                top_k=top_k, is_hazardous_prediction=is_hazardous_prediction,
                                possible_hazard_flag=possible_hazard_flag, note=note)
 
-app.mount("/", StaticFiles(directory=str(BASE_DIR / "static"), html=True), name="static")
+@app.get("/")
+def serve_index():
+    return FileResponse(str(BASE_DIR / "index.html"))
